@@ -81,6 +81,14 @@
     .create .btn { width: 100%; margin-top: 4px; }
     .note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
 
+
+    .poll-tabs { display: flex; gap: 6px; margin: 0 0 16px; padding: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; width: fit-content; max-width: 100%; flex-wrap: wrap; }
+    .poll-tab { background: transparent; border: 0; border-radius: 8px; padding: 8px 14px; font: 600 14px var(--f-body); color: var(--muted); cursor: pointer; }
+    .poll-tab:hover { color: var(--ink); }
+    .poll-tab.active { background: var(--panel); color: var(--ink); box-shadow: 0 0 0 1px var(--line); }
+    .poll-tab .count { font-family: var(--f-mono); font-weight: 500; color: var(--muted); margin-left: 4px; }
+    .poll-tab.active .count { color: var(--base); }
+
     .list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
     .list-head h2 { margin: 0; }
     .count { font-family: var(--f-mono); color: var(--muted); font-weight: 400; }
@@ -199,6 +207,10 @@
         <h2>Szavazások <span class="count" id="poll-count">0</span></h2>
         <button id="refresh" class="btn ghost">Frissítés</button>
       </div>
+      <nav class="poll-tabs" role="tablist" aria-label="Szavazás nézet">
+        <button type="button" class="poll-tab active" id="tab-main" data-view="main" role="tab" aria-selected="true">Főoldal <span class="count" id="main-count">0</span></button>
+        <button type="button" class="poll-tab" id="tab-archive" data-view="archive" role="tab" aria-selected="false">Archívum <span class="count" id="archive-count">0</span></button>
+      </nav>
       <div id="polls"><p class="empty">Szavazások betöltése a Base hálózatról…</p></div>
     </section>
   </main>

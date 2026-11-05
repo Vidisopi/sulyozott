@@ -42,6 +42,25 @@ let symbol = "IGOV";
 let polls = [];
 let busy = false;
 
+const ARCHIVE_AFTER_SEC = 48 * 60 * 60; // 48 óra a lejárat után → archívum
+let pollView = "main"; // "main" | "archive"
+
+function isArchived(p) {
+  const now = Math.floor(Date.now() / 1000);
+  return Number(p.deadline) + ARCHIVE_AFTER_SEC <= now;
+}
+
+function setPollView(view) {
+  pollView = view === "archive" ? "archive" : "main";
+  document.querySelectorAll(".poll-tab").forEach((btn) => {
+    const on = btn.dataset.view === pollView;
+    btn.classList.toggle("active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  renderPolls();
+}
+
+
 // ── 4. MetaMask csatlakozás ──
 async function connectWallet() {
   if (!window.ethereum) {
@@ -246,12 +265,23 @@ function renderSide(power) {
 
 function renderPolls() {
   const list = document.getElementById("polls");
-  document.getElementById("poll-count").textContent = polls.length;
-  if (polls.length === 0) {
-    list.innerHTML = `<p class="empty">Még nincs szavazás. A tanár indítja őket.</p>`;
+  const main = polls.filter((p) => !isArchived(p));
+  const archived = polls.filter((p) => isArchived(p));
+  const shown = pollView === "archive" ? archived : main;
+
+  const mainCount = document.getElementById("main-count");
+  const archiveCount = document.getElementById("archive-count");
+  if (mainCount) mainCount.textContent = main.length;
+  if (archiveCount) archiveCount.textContent = archived.length;
+  document.getElementById("poll-count").textContent = shown.length;
+
+  if (shown.length === 0) {
+    list.innerHTML = pollView === "archive"
+      ? `<p class="empty">Még nincs archív szavazás. A 48 óránál régebben lejárt szavazások ide kerülnek.</p>`
+      : `<p class="empty">Még nincs szavazás. A tanár indítja őket.</p>`;
     return;
   }
-  list.innerHTML = polls.map(pollCard).join("");
+  list.innerHTML = shown.map(pollCard).join("");
   if (busy) list.querySelectorAll("button").forEach((b) => { b.disabled = true; });
 }
 
@@ -385,6 +415,9 @@ document.getElementById("create-form").addEventListener("submit", async (e) => {
 document.getElementById("add-option").addEventListener("click", () => addOptionInput());
 document.getElementById("connect").addEventListener("click", connectWallet);
 document.getElementById("refresh").addEventListener("click", refreshAll);
+document.querySelectorAll(".poll-tab").forEach((btn) => {
+  btn.addEventListener("click", () => setPollView(btn.dataset.view));
+});
 document.getElementById("status-close").addEventListener("click", () => { document.getElementById("status").hidden = true; });
 
 document.getElementById("polls").addEventListener("click", (e) => {

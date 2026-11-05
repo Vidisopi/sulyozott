@@ -1,5 +1,8 @@
 # Súlyozott szavazás (IGOV) — oktatási demó
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+
 Milton Friedman Egyetem · Gazdasági informatika · blokklánc gyakorlat
 
 Ez a tároló egy **tokensúlyos szavazást** mutat be a **Base** főhálózaton. A diákok MetaMaskkal csatlakoznak; a szavazóerőt az **IGOV** token egyenlege adja egy pillanatképen (snapshot). A cél oktatási: érthető kontraktok, egyszerű webes felület, Remixben is megnyitható forrás.
@@ -157,8 +160,8 @@ Helyi kipróbálás: nyisd meg az `index.html`-t egy egyszerű HTTP szerverrel (
 
 ---
 
-## Licenc és felelősség
+## Licenc
 
-Oktatási demó. A mainnet kontraktok és a frontend „ahogy van” állapotú tananyag; ne tárolj rajta jelentős értéket. A MetaMask kulcsaidért te felelsz.
+Ez a tároló **[MIT](./LICENSE)** licenc alatt áll: szabadon másolható, módosítható, terjeszthető és kereskedelmi célra is használható, a copyright és a licencszöveg megtartásával. A szoftver „ahogy van” állapotú, garancia nélkül.
 
-Kérdés, hibajegy: nyiss Issue-t ezen a GitHub tárolón, vagy jelezd az órán.
+Oktatási demó: ne tárolj rajta jelentős értéket; a MetaMask kulcsaidért te felelsz.

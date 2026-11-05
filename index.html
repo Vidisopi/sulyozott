@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Láncszavazás · tokensúlyos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@500;600&display=swap">
+  <style>
+    :root {
+      --bg: #EEF2F7;
+      --panel: #FFFFFF;
+      --ink: #121A2A;
+      --muted: #5A6578;
+      --line: #D8DFEA;
+      --base: #0052FF;
+      --base-ink: #FFFFFF;
+      --base-soft: #E3ECFF;
+      --mine: #0A8F6A;
+      --mine-soft: #DDF3EB;
+      --warn: #B4570B;
+      --warn-soft: #FCEBDB;
+      --err: #B42335;
+      --err-soft: #FBE3E6;
+      --f-display: "Unbounded", "Arial Black", system-ui, sans-serif;
+      --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+      --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0A0F1A; --panel: #121A29; --ink: #E4EAF4; --muted: #94A1B8; --line: #243149;
+        --base: #4D8BFF; --base-ink: #06102A; --base-soft: #17264A;
+        --mine: #3CC79A; --mine-soft: #11302A; --warn: #F0A15A; --warn-soft: #3A2612;
+        --err: #FF7D8E; --err-soft: #3B1820;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--f-body); }
+    a { color: var(--base); }
+    button { font: inherit; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    :focus-visible { outline: 2px solid var(--base); outline-offset: 2px; }
+
+    .top { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+           padding: 18px 24px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand h1 { font: 600 22px/1 var(--f-display); margin: 0; letter-spacing: -.01em; }
+    .net { font: 500 12.5px var(--f-mono); color: var(--base); background: var(--base-soft); padding: 4px 9px; border-radius: 999px; }
+    .net::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--base); margin-right: 6px; vertical-align: 1px; }
+    .btn { background: var(--base); color: var(--base-ink); border: 0; border-radius: 8px; padding: 10px 18px; font-weight: 600; }
+    .btn:hover:not(:disabled) { filter: brightness(1.1); }
+    .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+    .wallet { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+    .wallet a { font-family: var(--f-mono); font-weight: 500; text-decoration: none; background: var(--mine-soft); color: var(--mine); padding: 6px 10px; border-radius: 8px; }
+
+    .status { margin: 16px auto 0; max-width: 1180px; padding: 12px 44px 12px 16px; border-radius: 8px; position: relative; font-size: 15px; }
+    .status.wait { background: var(--warn-soft); color: var(--ink); border-left: 4px solid var(--warn); }
+    .status.ok { background: var(--mine-soft); color: var(--ink); border-left: 4px solid var(--mine); }
+    .status.error { background: var(--err-soft); color: var(--ink); border-left: 4px solid var(--err); }
+    .status.wait::before { content: ""; display: inline-block; width: 12px; height: 12px; margin-right: 8px; border: 2px solid var(--warn); border-right-color: transparent; border-radius: 50%; vertical-align: -1px; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .status.wait::before { animation: none; } }
+    #status-close { position: absolute; right: 8px; top: 8px; background: none; border: 0; color: var(--muted); font-size: 20px; line-height: 1; padding: 4px 8px; }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 28px; align-items: start; }
+    @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+    h2 { font: 600 17px/1.3 var(--f-display); margin: 0 0 16px; }
+    .create { position: sticky; top: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: .02em; }
+    .field { margin-bottom: 16px; }
+    input[type=text], select { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+    #options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    .opt-input { display: flex; gap: 6px; }
+    .remove { width: 40px; flex: none; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 8px; font-size: 18px; }
+    .remove:hover { color: var(--err); border-color: var(--err); }
+    #add-option { background: none; border: 1px dashed var(--line); color: var(--base); border-radius: 8px; padding: 8px; width: 100%; font-size: 14px; }
+    .create .btn { width: 100%; margin-top: 4px; }
+    .note { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+
+    .list-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .list-head h2 { margin: 0; }
+    .count { font-family: var(--f-mono); color: var(--muted); font-weight: 400; }
+    #polls { display: flex; flex-direction: column; gap: 16px; }
+    .empty { color: var(--muted); padding: 32px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; margin: 0; }
+    .poll { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; }
+    .poll-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .pid { font: 500 13px var(--f-mono); color: var(--muted); }
+    .state { font: 500 12.5px var(--f-mono); padding: 3px 9px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+    .state.open { color: var(--mine); background: var(--mine-soft); }
+    .state.closed { color: var(--muted); background: var(--bg); }
+    .poll h3 { font-size: 20px; line-height: 1.3; margin: 0 0 4px; overflow-wrap: anywhere; }
+    .meta { font-size: 13.5px; color: var(--muted); margin: 0 0 14px; }
+    .opts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+    .opt { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); }
+    .opt.mine { border-color: var(--mine); background: var(--mine-soft); }
+    .opt-top { display: flex; justify-content: space-between; gap: 12px; grid-column: 1; }
+    .opt-name { font-weight: 500; overflow-wrap: anywhere; }
+    .opt-num { font: 500 15px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .opt-num small { color: var(--muted); font-size: 12.5px; margin-left: 4px; }
+    .bar { grid-column: 1; height: 6px; border-radius: 3px; background: var(--bg); overflow: hidden; }
+    .bar i { display: block; height: 100%; background: var(--base); border-radius: 3px; transition: width .4s ease; }
+    .opt.mine .bar i { background: var(--mine); }
+    .opt-btn { grid-column: 2; grid-row: 1 / span 2; background: var(--base); color: var(--base-ink); border: 0; border-radius: 8px; padding: 8px 14px; font-weight: 600; font-size: 14px; }
+    .opt-btn.ghost { background: transparent; color: var(--base); border: 1px solid var(--base); }
+    .tag { font-size: 11.5px; font-weight: 600; color: var(--mine); background: var(--panel); border: 1px solid var(--mine); padding: 1px 7px; border-radius: 999px; margin-left: 6px; white-space: nowrap; }
+    .tag.win { color: var(--warn); border-color: var(--warn); }
+    .hint { font-size: 13.5px; color: var(--muted); margin: 12px 0 0; }
+    .side { display: flex; flex-direction: column; gap: 16px; }
+    .create { position: static; }
+    .wallet b { font-family: var(--f-mono); font-weight: 500; color: var(--ink); }
+    .role { font: 600 11.5px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--warn); margin: 0 0 6px; }
+    textarea { width: 100%; min-height: 130px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: 13px/1.5 var(--f-mono); resize: vertical; }
+    .preview { font-size: 13px; color: var(--mine); margin: 6px 0 12px; min-height: 1.2em; }
+    .preview.bad { color: var(--err); }
+    .big { font: 600 34px/1.1 var(--f-display); margin: 4px 0 10px; }
+    .power { font-size: 14px; margin: -6px 0 14px; padding: 8px 12px; background: var(--base-soft); border-radius: 8px; }
+    .power b { font-family: var(--f-mono); font-weight: 500; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <h1>Láncszavazás</h1>
+      <span class="net">Base mainnet</span>
+    </div>
+    <button id="connect" class="btn">MetaMask csatlakoztatása</button>
+    <div id="wallet" class="wallet" hidden>Szavazóerőd most: <b id="wallet-power">–</b> <a id="wallet-addr" target="_blank" rel="noopener"></a></div>
+  </header>
+
+  <div id="status" class="status" hidden>
+    <span id="status-text" role="status" aria-live="polite"></span>
+    <button id="status-close" aria-label="Üzenet bezárása">×</button>
+  </div>
+
+  <main>
+    <div class="side">
+      <div id="teacher" hidden>
+        <div class="side">
+          <section class="card" id="distribute-card" hidden>
+            <p class="role">Tanári panel</p>
+            <h2>Tokenek kiosztása</h2>
+            <form id="distribute-form">
+              <div class="field">
+                <label for="dist-list">Cím és pontszám, soronként</label>
+                <textarea id="dist-list" placeholder="0x5B38Da6a701c568545dCfcB03FcB875f56beddC4, 8&#10;0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2, 5"></textarea>
+                <p class="preview" id="dist-preview"></p>
+              </div>
+              <button type="submit" class="btn">Kiosztás</button>
+            </form>
+            <p class="note">A kvíztábla két oszlopa (cím, pont) közvetlenül bemásolható. 1 pont = 1 token = 1 szavazat.</p>
+          </section>
+
+          <section class="card create" id="create-card" hidden>
+            <p class="role">Tanári panel</p>
+            <h2>Új szavazás</h2>
+            <form id="create-form">
+              <div class="field">
+                <label for="question">Kérdés</label>
+                <input type="text" id="question" maxlength="200" placeholder="Pl. Hova menjünk osztálykirándulásra?" required>
+              </div>
+              <div class="field">
+                <label>Opciók (2–8)</label>
+                <div id="options"></div>
+                <button type="button" id="add-option">+ Új opció</button>
+              </div>
+              <div class="field">
+                <label for="duration">Időtartam</label>
+                <select id="duration">
+                  <option value="5">5 perc</option>
+                  <option value="15" selected>15 perc</option>
+                  <option value="45">1 tanóra (45 perc)</option>
+                  <option value="60">1 óra</option>
+                  <option value="1440">1 nap</option>
+                  <option value="10080">1 hét</option>
+                </select>
+              </div>
+              <button type="submit" class="btn">Szavazás indítása</button>
+            </form>
+            <p class="note">Indításkor pillanatkép készül: csak az a token számít, ami addigra már a diákoknál volt. Előbb oszd ki a tokeneket!</p>
+          </section>
+        </div>
+      </div>
+
+      <section class="card" id="student">
+        <h2>Hogyan szavazol?</h2>
+        <p class="note" style="margin-top:0">A szavazóerőd most:</p>
+        <p class="big" id="my-power">–</p>
+        <p class="note">Minden szavazásnál az számít, hány tokened volt az <b>indítás pillanatában</b>. Ha utána kapsz vagy küldesz tokent, az csak a következő szavazásokra hat.</p>
+        <p class="note">Szavazást a tanár indít. Egy szavazáson egyszer szavazhatsz, és egyszer módosíthatsz.</p>
+      </section>
+    </div>
+
+    <section>
+      <div class="list-head">
+        <h2>Szavazások <span class="count" id="poll-count">0</span></h2>
+        <button id="refresh" class="btn ghost">Frissítés</button>
+      </div>
+      <div id="polls"><p class="empty">Szavazások betöltése a Base hálózatról…</p></div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"></script>
+  <script src="app.js?v=3"></script>
+</body>
+</html>
